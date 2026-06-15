@@ -4,324 +4,247 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>CaratLane — East Region Store Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8f7f4;color:#1a1a1a;padding:20px;}
-  h1{font-size:18px;font-weight:600;margin-bottom:4px;}
-  .sub{font-size:13px;color:#666;margin-bottom:14px;}
-  .filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
-  .filters span{font-size:12px;color:#888;margin-right:2px;}
-  .filter-btn{font-size:12px;padding:5px 14px;border-radius:20px;border:1.5px solid #d1d5db;background:#fff;color:#333;cursor:pointer;font-family:inherit;transition:all 0.15s;}
-  .filter-btn:hover{border-color:#7c3aed;color:#7c3aed;}
-  .filter-btn.active{background:#7c3aed;color:#fff;border-color:#7c3aed;}
-  .legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
-  .legend span{font-size:12px;color:#444;display:flex;align-items:center;gap:5px;}
-  .dot{width:12px;height:12px;border-radius:50%;display:inline-block;flex-shrink:0;}
-  .map-wrap{position:relative;background:#e8f4f8;border-radius:12px;border:1px solid #e0ddd8;overflow:hidden;}
-  canvas{width:100%;display:block;cursor:crosshair;}
-  #tooltip{position:absolute;display:none;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:9px 13px;font-size:12px;pointer-events:none;max-width:210px;box-shadow:0 4px 16px rgba(0,0,0,0.10);}
-  .stats{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
-  .stat{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:10px 16px;font-size:12px;min-width:100px;}
-  .stat-label{color:#888;font-size:11px;margin-bottom:3px;}
-  .stat-val{font-weight:600;font-size:16px;}
-  .stat-sub{font-size:11px;color:#888;margin-top:2px;}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4f1; color: #1a1a1a; }
+  header { padding: 16px 20px 12px; background: #fff; border-bottom: 1px solid #e5e3de; }
+  h1 { font-size: 17px; font-weight: 600; }
+  .sub { font-size: 12px; color: #777; margin-top: 2px; }
+  .controls { padding: 10px 20px; background: #fff; border-bottom: 1px solid #e5e3de; display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+  .filter-group label { font-size: 11px; color: #888; font-weight: 500; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .filter-btn { font-size: 12px; padding: 4px 12px; border-radius: 16px; border: 1.5px solid #d1d5db; background: #fff; color: #333; cursor: pointer; font-family: inherit; transition: all 0.12s; white-space: nowrap; }
+  .filter-btn:hover { border-color: #7c3aed; color: #7c3aed; }
+  .filter-btn.active { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+  .legend-group label { font-size: 11px; color: #888; font-weight: 500; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .legend { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #444; }
+  .dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; flex-shrink: 0; border: 1.5px solid rgba(0,0,0,0.15); }
+  #map { height: calc(100vh - 195px); min-height: 400px; }
+  .stats-bar { display: flex; gap: 0; border-top: 1px solid #e5e3de; background: #fff; }
+  .stat { padding: 10px 20px; border-right: 1px solid #e5e3de; font-size: 12px; }
+  .stat-label { color: #888; font-size: 11px; }
+  .stat-val { font-weight: 600; font-size: 15px; margin-top: 1px; }
+  .stat-sub { font-size: 11px; margin-top: 1px; }
+  .leaflet-popup-content { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
 </style>
 </head>
 <body>
 
-<h1>CaratLane — East Region Store Performance</h1>
-<p class="sub">67 stores · Revenue in Crores · Hover over a dot for details</p>
+<header>
+  <h1>CaratLane — East Region Store Performance</h1>
+  <p class="sub">67 stores across 5 regions &nbsp;·&nbsp; Revenue in Crores &nbsp;·&nbsp; Click any dot for details</p>
+</header>
 
-<div class="filters">
-  <span>Region:</span>
-  <button class="filter-btn active" id="btn-All" onclick="filter('All')">All regions</button>
-  <button class="filter-btn" id="btn-EWB1" onclick="filter('EWB 1')">EWB 1 — West Bengal A</button>
-  <button class="filter-btn" id="btn-EWB2" onclick="filter('EWB 2')">EWB 2 — West Bengal B</button>
-  <button class="filter-btn" id="btn-JH" onclick="filter('Jharkhand')">Jharkhand</button>
-  <button class="filter-btn" id="btn-ENE" onclick="filter('ENE')">ENE — Northeast</button>
-  <button class="filter-btn" id="btn-EOC" onclick="filter('EOC')">EOC — Odisha / CG</button>
+<div class="controls">
+  <div class="filter-group">
+    <label>Filter by region</label>
+    <div class="btns">
+      <button class="filter-btn active" id="btn-All"       onclick="setRegion('All')">All regions</button>
+      <button class="filter-btn"        id="btn-EWB1"      onclick="setRegion('EWB 1')">EWB 1 — West Bengal A</button>
+      <button class="filter-btn"        id="btn-EWB2"      onclick="setRegion('EWB 2')">EWB 2 — West Bengal B</button>
+      <button class="filter-btn"        id="btn-Jharkhand" onclick="setRegion('Jharkhand')">Jharkhand</button>
+      <button class="filter-btn"        id="btn-ENE"       onclick="setRegion('ENE')">ENE — Northeast</button>
+      <button class="filter-btn"        id="btn-EOC"       onclick="setRegion('EOC')">EOC — Odisha / CG</button>
+    </div>
+  </div>
+  <div class="legend-group">
+    <label>Revenue bucket</label>
+    <div class="legend">
+      <span class="legend-item"><span class="dot" style="background:#dc2626"></span>Less than 6 Cr</span>
+      <span class="legend-item"><span class="dot" style="background:#ea580c"></span>6 – 10 Cr</span>
+      <span class="legend-item"><span class="dot" style="background:#d97706"></span>10 – 15 Cr</span>
+      <span class="legend-item"><span class="dot" style="background:#16a34a"></span>15 – 20 Cr</span>
+      <span class="legend-item"><span class="dot" style="background:#2563eb"></span>20 – 25 Cr</span>
+      <span class="legend-item"><span class="dot" style="background:#7c3aed"></span>25 – 30 Cr</span>
+      <span class="legend-item"><span class="dot" style="background:#111827"></span>30 Cr & above</span>
+    </div>
+  </div>
 </div>
 
-<div class="legend">
-  <span><span class="dot" style="background:#dc2626"></span>Less than 6 Cr</span>
-  <span><span class="dot" style="background:#ea580c"></span>6 – 10 Cr</span>
-  <span><span class="dot" style="background:#ca8a04"></span>10 – 15 Cr</span>
-  <span><span class="dot" style="background:#16a34a"></span>15 – 20 Cr</span>
-  <span><span class="dot" style="background:#2563eb"></span>20 – 25 Cr</span>
-  <span><span class="dot" style="background:#7c3aed"></span>25 – 30 Cr</span>
-  <span><span class="dot" style="background:#111827"></span>30 Cr & above</span>
+<div id="map"></div>
+
+<div class="stats-bar" id="statsBar">
+  <div class="stat"><div class="stat-label">Stores</div><div class="stat-val" id="s-count">—</div></div>
+  <div class="stat"><div class="stat-label">Total revenue</div><div class="stat-val" id="s-total">—</div></div>
+  <div class="stat"><div class="stat-label">Avg / store</div><div class="stat-val" id="s-avg">—</div></div>
+  <div class="stat"><div class="stat-label">Top store</div><div class="stat-val" id="s-top" style="font-size:13px">—</div><div class="stat-sub" id="s-top-v"></div></div>
+  <div class="stat"><div class="stat-label">Lowest store</div><div class="stat-val" id="s-low" style="font-size:13px">—</div><div class="stat-sub" id="s-low-v"></div></div>
 </div>
 
-<div class="map-wrap">
-  <canvas id="mapCanvas" width="960" height="640"></canvas>
-  <div id="tooltip"></div>
-</div>
-
-<div class="stats" id="stats"></div>
-
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const W=960,H=640;
-const GEO={minLng:79.5,maxLng:97.5,minLat:9.5,maxLat:29.5};
+const STORES = [
+  {r:'EWB 1', n:'Portblair',                     c:'PortBlair',     v:8.63,  lat:11.623, lng:92.726},
+  {r:'EWB 1', n:'Berhampore — Netaji Rd',         c:'Berhampore',    v:12.08, lat:24.105, lng:88.253},
+  {r:'EWB 1', n:'Chandannagar',                   c:'Chandannagar',  v:11.50, lat:22.869, lng:88.370},
+  {r:'EWB 1', n:'Serampore',                      c:'Serampore',     v:15.53, lat:22.749, lng:88.341},
+  {r:'EWB 1', n:'Howrah Avani Mall',              c:'Howrah',        v:12.08, lat:22.596, lng:88.264},
+  {r:'EWB 1', n:'Acropolis Mall',                 c:'Kolkata',       v:25.30, lat:22.536, lng:88.374},
+  {r:'EWB 1', n:'Barrackpore',                    c:'Barrackpore',   v:9.34,  lat:22.760, lng:88.369},
+  {r:'EWB 1', n:'Jadavpur',                       c:'Kolkata',       v:10.93, lat:22.497, lng:88.371},
+  {r:'EWB 1', n:'Kamalgazi',                      c:'Kolkata',       v:12.08, lat:22.473, lng:88.393},
+  {r:'EWB 1', n:'South City Mall',                c:'Kolkata',       v:21.85, lat:22.499, lng:88.363},
+  {r:'EWB 1', n:'Sodepur',                        c:'Sodepur',       v:10.35, lat:22.699, lng:88.396},
+  {r:'EWB 1', n:'Tollygunge',                     c:'Kolkata',       v:13.80, lat:22.500, lng:88.344},
+  {r:'EWB 1', n:'Midnapore — Keranital',          c:'Midnapore',     v:12.08, lat:22.422, lng:87.320},
+  {r:'EWB 1', n:'Gariahat',                       c:'Kolkata',       v:31.05, lat:22.516, lng:88.366},
+  {r:'EWB 1', n:'Kankurgachi',                    c:'Kolkata',       v:15.53, lat:22.574, lng:88.386},
+  {r:'EWB 2', n:'Asansol — Murgasol',             c:'Asansol',       v:11.50, lat:23.683, lng:86.982},
+  {r:'EWB 2', n:'Bardhaman — GT Road',            c:'Bardhaman',     v:17.83, lat:23.232, lng:87.862},
+  {r:'EWB 2', n:'Durgapur City Centre',           c:'Durgapur',      v:15.53, lat:23.520, lng:87.312},
+  {r:'EWB 2', n:'Behala',                         c:'Kolkata',       v:17.83, lat:22.496, lng:88.312},
+  {r:'EWB 2', n:'Barasat',                        c:'Barasat',       v:9.78,  lat:22.724, lng:88.479},
+  {r:'EWB 2', n:'BT Road',                        c:'Kolkata',       v:17.83, lat:22.651, lng:88.375},
+  {r:'EWB 2', n:'City Center Mall',               c:'Kolkata',       v:17.83, lat:22.575, lng:88.433},
+  {r:'EWB 2', n:'Chinar Park',                    c:'Kolkata',       v:28.18, lat:22.603, lng:88.459},
+  {r:'EWB 2', n:'Jessore Road',                   c:'Kolkata',       v:12.08, lat:22.631, lng:88.422},
+  {r:'EWB 2', n:'Kanchrapara',                    c:'Kanchrapara',   v:8.05,  lat:22.948, lng:88.434},
+  {r:'EWB 2', n:'Lake Mall',                      c:'Kolkata',       v:19.55, lat:22.528, lng:88.344},
+  {r:'EWB 2', n:'Park Street',                    c:'Kolkata',       v:29.90, lat:22.553, lng:88.352},
+  {r:'EWB 2', n:'South Dumdum',                   c:'Kolkata',       v:5.75,  lat:22.646, lng:88.401},
+  {r:'EWB 2', n:'Salt Lake',                      c:'Kolkata',       v:6.90,  lat:22.580, lng:88.417},
+  {r:'Jharkhand', n:'Bokaro — Sector 3',          c:'Bokaro',        v:8.05,  lat:23.669, lng:86.151},
+  {r:'Jharkhand', n:'Dhanbad — Hirapur',          c:'Dhanbad',       v:10.35, lat:23.796, lng:86.430},
+  {r:'Jharkhand', n:'Dhanbad — Shramik Nagar',    c:'Dhanbad',       v:6.90,  lat:23.810, lng:86.446},
+  {r:'Jharkhand', n:'Jamshedpur — Sakchi',        c:'Jamshedpur',    v:13.80, lat:22.805, lng:86.203},
+  {r:'Jharkhand', n:'Jamshedpur — Bistupur',      c:'Jamshedpur',    v:15.53, lat:22.819, lng:86.186},
+  {r:'Jharkhand', n:'Ranchi — Lalpur',            c:'Ranchi',        v:11.50, lat:23.344, lng:85.310},
+  {r:'Jharkhand', n:'Ranchi — Kutchery',          c:'Ranchi',        v:10.35, lat:23.357, lng:85.322},
+  {r:'Jharkhand', n:'Ranchi — Main Road',         c:'Ranchi',        v:20.13, lat:23.351, lng:85.309},
+  {r:'ENE', n:'Agartala',                         c:'Agartala',      v:6.90,  lat:23.832, lng:91.287},
+  {r:'ENE', n:'Aizawl',                           c:'Aizawl',        v:17.25, lat:23.727, lng:92.718},
+  {r:'ENE', n:'Dimapur — Khermahal',              c:'Dimapur',       v:10.93, lat:25.911, lng:93.728},
+  {r:'ENE', n:'Gangtok — Westpoint Mall',         c:'Gangtok',       v:8.63,  lat:27.331, lng:88.614},
+  {r:'ENE', n:'Guwahati — City Center',           c:'Guwahati',      v:18.40, lat:26.148, lng:91.744},
+  {r:'ENE', n:'Guwahati — GS Road',               c:'Guwahati',      v:16.10, lat:26.143, lng:91.736},
+  {r:'ENE', n:'Guwahati — Kalapahar',             c:'Guwahati',      v:3.45,  lat:26.136, lng:91.712},
+  {r:'ENE', n:'Guwahati — Six Mile',              c:'Guwahati',      v:8.63,  lat:26.158, lng:91.777},
+  {r:'ENE', n:'Itanagar — E Sector',              c:'Itanagar',      v:14.95, lat:27.084, lng:93.605},
+  {r:'ENE', n:'Shillong — Police Bazar',          c:'Shillong',      v:8.63,  lat:25.579, lng:91.893},
+  {r:'ENE', n:'Dibrugarh — HS Road',              c:'Dibrugarh',     v:9.20,  lat:27.473, lng:94.912},
+  {r:'ENE', n:'Imphal — DM College Road',         c:'Imphal',        v:5.75,  lat:24.817, lng:93.937},
+  {r:'ENE', n:'Siliguri — City Centre Mall',      c:'Siliguri',      v:11.50, lat:26.727, lng:88.395},
+  {r:'ENE', n:'Siliguri — Sevak Road',            c:'Siliguri',      v:11.50, lat:26.711, lng:88.431},
+  {r:'EOC', n:'Bhubaneswar — Rasulgarh',          c:'Bhubaneswar',   v:12.65, lat:20.296, lng:85.825},
+  {r:'EOC', n:'Bhilai — Nehru Nagar',             c:'Bhilai',        v:9.20,  lat:21.194, lng:81.351},
+  {r:'EOC', n:'Bilaspur — Agrasen Chowk',         c:'Bilaspur',      v:17.83, lat:22.080, lng:82.139},
+  {r:'EOC', n:'Balasore — Bhaskar Ganj',          c:'Balasore',      v:10.35, lat:21.494, lng:86.929},
+  {r:'EOC', n:'Raipur — Pandri',                  c:'Raipur',        v:14.38, lat:21.251, lng:81.630},
+  {r:'EOC', n:'Raipur — VIP Chowk',               c:'Raipur',        v:13.80, lat:21.240, lng:81.619},
+  {r:'EOC', n:'Sambalpur — Budharaja Rd',         c:'Sambalpur',     v:7.48,  lat:21.467, lng:83.976},
+  {r:'EOC', n:'Angul — Shankar Cinema',           c:'Angul',         v:6.90,  lat:20.843, lng:85.101},
+  {r:'EOC', n:'Bhubaneswar — Chandrasekharpur',   c:'Bhubaneswar',   v:28.18, lat:20.312, lng:85.832},
+  {r:'EOC', n:'Bhubaneswar — Janpath',            c:'Bhubaneswar',   v:28.18, lat:20.268, lng:85.844},
+  {r:'EOC', n:'Bhubaneswar — Khandagiri',         c:'Bhubaneswar',   v:9.20,  lat:20.272, lng:85.781},
+  {r:'EOC', n:'Bhubaneswar — Soubhagya Nagar',    c:'Bhubaneswar',   v:23.00, lat:20.280, lng:85.801},
+  {r:'EOC', n:'Berhampur Odisha',                 c:'Berhampur',     v:7.13,  lat:19.315, lng:84.794},
+  {r:'EOC', n:'Cuttack — CDA Sector VI',          c:'Cuttack',       v:6.90,  lat:20.513, lng:85.899},
+  {r:'EOC', n:'Cuttack — Cantonment Road',        c:'Cuttack',       v:10.93, lat:20.463, lng:85.880},
+  {r:'EOC', n:'Ambikapur — Banaras Chowk',        c:'Ambikapur',     v:7.13,  lat:23.119, lng:83.194},
+  {r:'EOC', n:'Rourkela — Birsa Road',            c:'Rourkela',      v:8.05,  lat:22.260, lng:84.853}
+];
 
-function proj(lat,lng){
-  const x=(lng-GEO.minLng)/(GEO.maxLng-GEO.minLng)*W;
-  const y=(1-(lat-GEO.minLat)/(GEO.maxLat-GEO.minLat))*H;
-  return[x,y];
+const REGION_VIEW = {
+  'All':       { center: [22.5, 87.5], zoom: 5 },
+  'EWB 1':     { center: [22.8, 88.2], zoom: 9 },
+  'EWB 2':     { center: [22.7, 88.3], zoom: 9 },
+  'Jharkhand': { center: [23.2, 85.8], zoom: 8 },
+  'ENE':       { center: [26.0, 91.5], zoom: 6 },
+  'EOC':       { center: [20.8, 83.5], zoom: 7 }
+};
+
+function bucketColor(v) {
+  if (v < 6)  return '#dc2626';
+  if (v < 10) return '#ea580c';
+  if (v < 15) return '#d97706';
+  if (v < 20) return '#16a34a';
+  if (v < 25) return '#2563eb';
+  if (v < 30) return '#7c3aed';
+  return '#111827';
 }
 
-const STORES=[
-  {r:'EWB 1',n:'Portblair',c:'PortBlair',v:8.63,lat:11.62,lng:92.73},
-  {r:'EWB 1',n:'Berhampore Netaji Rd',c:'Berhampore',v:12.08,lat:24.11,lng:88.25},
-  {r:'EWB 1',n:'Chandannagar',c:'Chandannagar',v:11.50,lat:22.87,lng:88.37},
-  {r:'EWB 1',n:'Serampore',c:'Serampore',v:15.53,lat:22.75,lng:88.34},
-  {r:'EWB 1',n:'Howrah Avani Mall',c:'Howrah',v:12.08,lat:22.60,lng:88.26},
-  {r:'EWB 1',n:'Acropolis Mall',c:'Kolkata',v:25.30,lat:22.535,lng:88.362},
-  {r:'EWB 1',n:'Barrackpore',c:'Kolkata N',v:9.34,lat:22.76,lng:88.37},
-  {r:'EWB 1',n:'Jadavpur',c:'Kolkata',v:10.93,lat:22.497,lng:88.371},
-  {r:'EWB 1',n:'Kamalgazi',c:'Kolkata',v:12.08,lat:22.472,lng:88.391},
-  {r:'EWB 1',n:'South City Mall',c:'Kolkata',v:21.85,lat:22.498,lng:88.362},
-  {r:'EWB 1',n:'Sodepur',c:'Kolkata N',v:10.35,lat:22.698,lng:88.395},
-  {r:'EWB 1',n:'Tollygunge',c:'Kolkata',v:13.80,lat:22.499,lng:88.343},
-  {r:'EWB 1',n:'Midnapore Keranital',c:'Midnapore',v:12.08,lat:22.42,lng:87.32},
-  {r:'EWB 1',n:'Gariahat',c:'Kolkata',v:31.05,lat:22.515,lng:88.365},
-  {r:'EWB 1',n:'Kankurgachi',c:'Kolkata',v:15.53,lat:22.574,lng:88.385},
-  {r:'EWB 2',n:'Asansol Murgasol',c:'Asansol',v:11.50,lat:23.68,lng:86.98},
-  {r:'EWB 2',n:'Bardhaman GT Rd',c:'Bardhaman',v:17.83,lat:23.23,lng:87.86},
-  {r:'EWB 2',n:'Durgapur City Centre',c:'Durgapur',v:15.53,lat:23.52,lng:87.31},
-  {r:'EWB 2',n:'Behala',c:'Kolkata S',v:17.83,lat:22.496,lng:88.312},
-  {r:'EWB 2',n:'Barasat',c:'Barasat',v:9.78,lat:22.72,lng:88.48},
-  {r:'EWB 2',n:'BT Road',c:'Kolkata N',v:17.83,lat:22.650,lng:88.374},
-  {r:'EWB 2',n:'City Center Mall',c:'Kolkata E',v:17.83,lat:22.574,lng:88.432},
-  {r:'EWB 2',n:'Chinar Park',c:'Kolkata E',v:28.18,lat:22.603,lng:88.458},
-  {r:'EWB 2',n:'Jessore Road',c:'Kolkata N',v:12.08,lat:22.630,lng:88.421},
-  {r:'EWB 2',n:'Kanchrapara',c:'Kanchrapara',v:8.05,lat:22.95,lng:88.43},
-  {r:'EWB 2',n:'Lake Mall',c:'Kolkata',v:19.55,lat:22.527,lng:88.343},
-  {r:'EWB 2',n:'Park Street',c:'Kolkata',v:29.90,lat:22.553,lng:88.351},
-  {r:'EWB 2',n:'South Dumdum',c:'Kolkata N',v:5.75,lat:22.645,lng:88.400},
-  {r:'EWB 2',n:'Salt Lake',c:'Kolkata E',v:6.90,lat:22.579,lng:88.416},
-  {r:'Jharkhand',n:'Bokaro Sector 3',c:'Bokaro',v:8.05,lat:23.67,lng:86.15},
-  {r:'Jharkhand',n:'Dhanbad Hirapur',c:'Dhanbad',v:10.35,lat:23.80,lng:86.43},
-  {r:'Jharkhand',n:'Dhanbad Shramik Nagar',c:'Dhanbad',v:6.90,lat:23.81,lng:86.46},
-  {r:'Jharkhand',n:'Jamshedpur Sakchi',c:'Jamshedpur',v:13.80,lat:22.80,lng:86.20},
-  {r:'Jharkhand',n:'Jamshedpur Bistupur',c:'Jamshedpur',v:15.53,lat:22.82,lng:86.19},
-  {r:'Jharkhand',n:'Ranchi Lalpur',c:'Ranchi',v:11.50,lat:23.34,lng:85.31},
-  {r:'Jharkhand',n:'Ranchi Kutchery',c:'Ranchi',v:10.35,lat:23.36,lng:85.32},
-  {r:'Jharkhand',n:'Ranchi Main Road',c:'Ranchi',v:20.13,lat:23.35,lng:85.30},
-  {r:'ENE',n:'Agartala',c:'Agartala',v:6.90,lat:23.83,lng:91.29},
-  {r:'ENE',n:'Aizawl',c:'Aizwal',v:17.25,lat:23.73,lng:92.72},
-  {r:'ENE',n:'Dimapur Khermahal',c:'Dimapur',v:10.93,lat:25.91,lng:93.73},
-  {r:'ENE',n:'Gangtok Westpoint',c:'Gangtok',v:8.63,lat:27.33,lng:88.61},
-  {r:'ENE',n:'Guwahati City Center',c:'Guwahati',v:18.40,lat:26.15,lng:91.74},
-  {r:'ENE',n:'Guwahati GS Road',c:'Guwahati',v:16.10,lat:26.14,lng:91.73},
-  {r:'ENE',n:'Guwahati Kalapahar',c:'Guwahati',v:3.45,lat:26.13,lng:91.71},
-  {r:'ENE',n:'Guwahati Six Mile',c:'Guwahati',v:8.63,lat:26.16,lng:91.77},
-  {r:'ENE',n:'Itanagar E Sector',c:'Itanagar',v:14.95,lat:27.08,lng:93.61},
-  {r:'ENE',n:'Shillong Police Bazar',c:'Shillong',v:8.63,lat:25.58,lng:91.89},
-  {r:'ENE',n:'Dibrugarh HS Road',c:'Dibrugarh',v:9.20,lat:27.47,lng:94.91},
-  {r:'ENE',n:'Imphal DM College Rd',c:'Imphal',v:5.75,lat:24.82,lng:93.94},
-  {r:'ENE',n:'Siliguri City Centre',c:'Siliguri',v:11.50,lat:26.73,lng:88.40},
-  {r:'ENE',n:'Siliguri Sevak Road',c:'Siliguri',v:11.50,lat:26.71,lng:88.43},
-  {r:'EOC',n:'Bhubaneswar Rasulgarh',c:'Bhubaneswar',v:12.65,lat:20.30,lng:85.82},
-  {r:'EOC',n:'Bhilai Nehru Nagar',c:'Bhilai',v:9.20,lat:21.19,lng:81.35},
-  {r:'EOC',n:'Bilaspur Agrasen Chowk',c:'Bilaspur',v:17.83,lat:22.08,lng:82.14},
-  {r:'EOC',n:'Balasore Bhaskar Ganj',c:'Balasore',v:10.35,lat:21.49,lng:86.93},
-  {r:'EOC',n:'Raipur Pandri',c:'Raipur',v:14.38,lat:21.25,lng:81.63},
-  {r:'EOC',n:'Raipur VIP Chowk',c:'Raipur',v:13.80,lat:21.24,lng:81.62},
-  {r:'EOC',n:'Sambalpur Budharaja Rd',c:'Sambalpur',v:7.48,lat:21.47,lng:83.98},
-  {r:'EOC',n:'Angul Shankar Cinema',c:'Angul',v:6.90,lat:20.84,lng:85.10},
-  {r:'EOC',n:'Bhubaneswar Chandrasekharpur',c:'Bhubaneswar',v:28.18,lat:20.31,lng:85.83},
-  {r:'EOC',n:'Bhubaneswar Janpath',c:'Bhubaneswar',v:28.18,lat:20.27,lng:85.84},
-  {r:'EOC',n:'Bhubaneswar Khandagiri',c:'Bhubaneswar',v:9.20,lat:20.27,lng:85.78},
-  {r:'EOC',n:'Bhubaneswar Soubhagya Nagar',c:'Bhubaneswar',v:23.00,lat:20.28,lng:85.80},
-  {r:'EOC',n:'Berhampur Odisha',c:'Berhampur',v:7.13,lat:19.32,lng:84.79},
-  {r:'EOC',n:'Cuttack CDA Sector VI',c:'Cuttack',v:6.90,lat:20.51,lng:85.90},
-  {r:'EOC',n:'Cuttack Cantonment Rd',c:'Cuttack',v:10.93,lat:20.46,lng:85.88},
-  {r:'EOC',n:'Ambikapur Banaras Chowk',c:'Ambikapur',v:7.13,lat:23.12,lng:83.19},
-  {r:'EOC',n:'Rourkela Birsa Road',c:'Rourkela',v:8.05,lat:22.26,lng:84.85}
-];
+function bucketLabel(v) {
+  if (v < 6)  return '< 6 Cr';
+  if (v < 10) return '6–10 Cr';
+  if (v < 15) return '10–15 Cr';
+  if (v < 20) return '15–20 Cr';
+  if (v < 25) return '20–25 Cr';
+  if (v < 30) return '25–30 Cr';
+  return '30+ Cr';
+}
 
-const COLOR=v=>{
-  if(v<6)return'#dc2626';
-  if(v<10)return'#ea580c';
-  if(v<15)return'#ca8a04';
-  if(v<20)return'#16a34a';
-  if(v<25)return'#2563eb';
-  if(v<30)return'#7c3aed';
-  return'#111827';
-};
-const LABEL=v=>{
-  if(v<6)return'< 6 Cr';
-  if(v<10)return'6–10 Cr';
-  if(v<15)return'10–15 Cr';
-  if(v<20)return'15–20 Cr';
-  if(v<25)return'20–25 Cr';
-  if(v<30)return'25–30 Cr';
-  return'30+ Cr';
-};
-
-const REGION_BOUNDS={
-  'EWB 1':[21.5,24.5,86.8,92.8],
-  'EWB 2':[22.4,24.0,86.8,88.7],
-  'Jharkhand':[21.9,24.5,83.8,87.1],
-  'ENE':[22.5,28.5,87.9,96.5],
-  'EOC':[18.5,23.5,80.0,87.5]
-};
-const REGION_FILL={
-  'EWB 1':'rgba(37,99,235,0.07)',
-  'EWB 2':'rgba(37,99,235,0.13)',
-  'Jharkhand':'rgba(234,88,12,0.08)',
-  'ENE':'rgba(16,163,74,0.08)',
-  'EOC':'rgba(124,58,237,0.08)'
-};
-
-const STATE_PATHS={
-  'WB':[[21.5,86.8],[21.5,88.4],[22.0,88.75],[22.6,88.85],[23.5,88.6],[23.5,87.8],[24.5,88.0],[26.9,88.4],[27.0,88.5],[27.2,88.7],[26.85,88.05],[26.0,87.1],[24.5,87.1],[22.5,86.5],[21.5,86.8]],
-  'JH':[[21.9,83.8],[21.9,86.9],[22.5,87.0],[23.0,87.1],[24.5,87.1],[24.5,84.8],[23.5,83.9],[21.9,83.8]],
-  'OD':[[18.6,80.3],[18.6,85.5],[19.5,86.5],[20.5,87.5],[22.5,87.5],[23.0,86.8],[22.5,84.5],[21.0,82.5],[20.0,80.6],[18.6,80.3]],
-  'CG':[[17.8,80.2],[17.8,83.0],[18.6,83.5],[19.0,83.0],[22.0,84.0],[23.5,83.7],[24.1,83.0],[24.0,80.8],[17.8,80.2]],
-  'AS':[[24.1,89.7],[24.1,92.8],[27.5,96.0],[27.5,95.0],[28.0,94.0],[27.5,91.0],[26.0,89.8],[24.1,89.7]],
-  'MG':[[23.0,92.3],[23.0,93.5],[25.0,93.9],[26.0,93.1],[26.5,92.7],[25.5,92.0],[23.0,92.3]],
-  'MN':[[23.8,93.0],[23.8,94.8],[25.7,94.8],[25.7,93.0],[23.8,93.0]],
-  'MZ':[[21.9,92.2],[21.9,93.5],[24.5,93.5],[24.5,92.2],[21.9,92.2]],
-  'NL':[[25.2,93.3],[25.2,95.3],[27.0,95.3],[27.0,93.3],[25.2,93.3]],
-  'SK':[[27.1,88.0],[27.1,88.9],[28.1,88.9],[28.1,88.0],[27.1,88.0]],
-  'AN':[[10.5,92.1],[10.5,93.3],[13.7,93.3],[13.7,92.1],[10.5,92.1]]
-};
-
-const STATE_LABELS=[
-  {label:'West Bengal',lat:23.0,lng:87.8},
-  {label:'Jharkhand',lat:23.2,lng:85.3},
-  {label:'Odisha',lat:20.4,lng:83.5},
-  {label:'Chhattisgarh',lat:21.2,lng:81.8},
-  {label:'Assam',lat:26.0,lng:92.5},
-  {label:'Andaman & Nicobar',lat:12.0,lng:92.7},
-  {label:'Meghalaya',lat:25.2,lng:91.4},
-  {label:'Manipur',lat:24.7,lng:93.9},
-  {label:'Mizoram',lat:23.2,lng:92.8},
-  {label:'Nagaland',lat:26.1,lng:94.3},
-  {label:'Sikkim',lat:27.5,lng:88.5}
-];
-
-const canvas=document.getElementById('mapCanvas');
-const ctx=canvas.getContext('2d');
-let plotted=[];
-
-function drawMap(filterRegion){
-  ctx.clearRect(0,0,W,H);
-  ctx.fillStyle='#ddeef5';
-  ctx.fillRect(0,0,W,H);
-
-  Object.entries(STATE_PATHS).forEach(([k,pts])=>{
-    ctx.beginPath();
-    pts.forEach(([lat,lng],i)=>{
-      const[x,y]=proj(lat,lng);
-      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-    });
-    ctx.closePath();
-    ctx.fillStyle='#f2efe9';
-    ctx.fill();
-    ctx.strokeStyle='#c5c0b8';
-    ctx.lineWidth=1;
-    ctx.stroke();
+function makeIcon(color, size) {
+  const s = size || 14;
+  return L.divIcon({
+    html: `<div style="width:${s}px;height:${s}px;border-radius:50%;background:${color};border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.35);"></div>`,
+    className: '',
+    iconSize: [s, s],
+    iconAnchor: [s/2, s/2],
+    popupAnchor: [0, -s/2]
   });
+}
 
-  if(filterRegion!=='All'&&REGION_BOUNDS[filterRegion]){
-    const[mlat,xlat,mlng,xlng]=REGION_BOUNDS[filterRegion];
-    const[x1,y1]=proj(xlat,mlng);
-    const[x2,y2]=proj(mlat,xlng);
-    ctx.fillStyle=REGION_FILL[filterRegion]||'rgba(100,100,200,0.1)';
-    ctx.fillRect(x1,y1,x2-x1,y2-y1);
-    ctx.strokeStyle='rgba(80,80,180,0.25)';
-    ctx.lineWidth=1.5;
-    ctx.strokeRect(x1,y1,x2-x1,y2-y1);
-  }
+const map = L.map('map', { zoomControl: true }).setView([22.5, 87.5], 5);
 
-  ctx.font='bold 11px -apple-system,sans-serif';
-  ctx.fillStyle='rgba(100,90,78,0.55)';
-  ctx.textAlign='center';
-  STATE_LABELS.forEach(({label,lat,lng})=>{
-    const[x,y]=proj(lat,lng);
-    ctx.fillText(label,x,y);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  maxZoom: 18
+}).addTo(map);
+
+let markers = [];
+let activeRegion = 'All';
+
+function renderMarkers(region) {
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+  const visible = region === 'All' ? STORES : STORES.filter(s => s.r === region);
+  visible.forEach(s => {
+    const color = bucketColor(s.v);
+    const m = L.marker([s.lat, s.lng], { icon: makeIcon(color, 16) }).addTo(map);
+    m.bindPopup(`
+      <div style="min-width:170px;">
+        <div style="font-weight:700;font-size:14px;margin-bottom:2px;">${s.c}</div>
+        <div style="color:#555;font-size:12px;margin-bottom:8px;">${s.n}</div>
+        <div style="font-size:18px;font-weight:700;color:${color};">${s.v.toFixed(2)} Cr</div>
+        <div style="font-size:11px;margin-top:3px;"><span style="background:${color};color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">${bucketLabel(s.v)}</span> &nbsp; ${s.r}</div>
+      </div>
+    `, { maxWidth: 220 });
+    markers.push(m);
   });
-
-  plotted=[];
-  const used=[];
-  const visible=filterRegion==='All'?STORES:STORES.filter(s=>s.r===filterRegion);
-
-  visible.forEach(s=>{
-    let[px,py]=proj(s.lat,s.lng);
-    let ox=0,oy=0,tries=0;
-    while(tries<24){
-      const conflict=used.find(([ux,uy])=>Math.abs(ux-(px+ox))<10&&Math.abs(uy-(py+oy))<10);
-      if(!conflict)break;
-      const angle=(tries*137.5)*Math.PI/180;
-      const rr=11+Math.floor(tries/6)*11;
-      ox=Math.cos(angle)*rr;oy=Math.sin(angle)*rr;
-      tries++;
-    }
-    px+=ox;py+=oy;
-    used.push([px,py]);
-
-    const col=COLOR(s.v);
-    ctx.beginPath();
-    ctx.arc(px,py,7,0,Math.PI*2);
-    ctx.fillStyle=col;
-    ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,0.9)';
-    ctx.lineWidth=2;
-    ctx.stroke();
-    plotted.push({s,px,py});
-  });
-
   updateStats(visible);
 }
 
-function updateStats(visible){
-  const total=visible.reduce((a,s)=>a+s.v,0);
-  const avg=total/visible.length;
-  const top=visible.slice().sort((a,b)=>b.v-a.v)[0];
-  const low=visible.slice().sort((a,b)=>a.v-b.v)[0];
-  document.getElementById('stats').innerHTML=`
-    <div class="stat"><div class="stat-label">Stores</div><div class="stat-val">${visible.length}</div></div>
-    <div class="stat"><div class="stat-label">Total revenue</div><div class="stat-val">${total.toFixed(1)} Cr</div></div>
-    <div class="stat"><div class="stat-label">Avg / store</div><div class="stat-val">${avg.toFixed(1)} Cr</div></div>
-    <div class="stat"><div class="stat-label">Top store</div><div class="stat-val" style="font-size:13px">${top.n}</div><div class="stat-sub" style="color:${COLOR(top.v)};font-weight:600">${top.v} Cr · ${LABEL(top.v)}</div></div>
-    <div class="stat"><div class="stat-label">Lowest store</div><div class="stat-val" style="font-size:13px">${low.n}</div><div class="stat-sub" style="color:${COLOR(low.v)};font-weight:600">${low.v} Cr · ${LABEL(low.v)}</div></div>
-  `;
+function updateStats(visible) {
+  const total = visible.reduce((a, s) => a + s.v, 0);
+  const avg = total / visible.length;
+  const sorted = visible.slice().sort((a, b) => b.v - a.v);
+  const top = sorted[0], low = sorted[sorted.length - 1];
+  document.getElementById('s-count').textContent = visible.length;
+  document.getElementById('s-total').textContent = total.toFixed(1) + ' Cr';
+  document.getElementById('s-avg').textContent = avg.toFixed(1) + ' Cr';
+  document.getElementById('s-top').textContent = top.n;
+  document.getElementById('s-top-v').innerHTML = `<span style="color:${bucketColor(top.v)};font-weight:600">${top.v} Cr</span>`;
+  document.getElementById('s-low').textContent = low.n;
+  document.getElementById('s-low-v').innerHTML = `<span style="color:${bucketColor(low.v)};font-weight:600">${low.v} Cr</span>`;
 }
 
-const tip=document.getElementById('tooltip');
-canvas.addEventListener('mousemove',e=>{
-  const rect=canvas.getBoundingClientRect();
-  const sx=W/rect.width;
-  const mx=(e.clientX-rect.left)*sx;
-  const my=(e.clientY-rect.top)*sx;
-  const hit=plotted.find(({px,py})=>Math.abs(px-mx)<11&&Math.abs(py-my)<11);
-  if(hit){
-    canvas.style.cursor='pointer';
-    const{s}=hit;
-    const lx=e.clientX-rect.left;
-    const ly=e.clientY-rect.top;
-    tip.style.display='block';
-    tip.style.left=(lx+14)+'px';
-    tip.style.top=(ly-8)+'px';
-    tip.innerHTML=`<div style="font-weight:600;font-size:13px;margin-bottom:2px">${s.c}</div><div style="color:#666;font-size:11px;margin-bottom:5px">${s.n}</div><div style="font-size:14px;font-weight:700;color:${COLOR(s.v)}">${s.v.toFixed(2)} Cr</div><div style="font-size:11px;margin-top:2px;color:#555">${LABEL(s.v)} &nbsp;·&nbsp; ${s.r}</div>`;
-  } else {
-    canvas.style.cursor='crosshair';
-    tip.style.display='none';
-  }
-});
-canvas.addEventListener('mouseleave',()=>tip.style.display='none');
-
-function filter(region){
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  const idMap={'All':'btn-All','EWB 1':'btn-EWB1','EWB 2':'btn-EWB2','Jharkhand':'btn-JH','ENE':'btn-ENE','EOC':'btn-EOC'};
-  const el=document.getElementById(idMap[region]);
-  if(el)el.classList.add('active');
-  drawMap(region);
+function setRegion(region) {
+  activeRegion = region;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  const idMap = {
+    'All':'btn-All', 'EWB 1':'btn-EWB1', 'EWB 2':'btn-EWB2',
+    'Jharkhand':'btn-Jharkhand', 'ENE':'btn-ENE', 'EOC':'btn-EOC'
+  };
+  const el = document.getElementById(idMap[region]);
+  if (el) el.classList.add('active');
+  renderMarkers(region);
+  const v = REGION_VIEW[region] || REGION_VIEW['All'];
+  map.flyTo(v.center, v.zoom, { duration: 0.8 });
 }
 
-drawMap('All');
+renderMarkers('All');
 </script>
 </body>
 </html>
