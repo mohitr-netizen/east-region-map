@@ -17,6 +17,9 @@
   .filter-btn { font-size: 12px; padding: 4px 12px; border-radius: 16px; border: 1.5px solid #d1d5db; background: #fff; color: #333; cursor: pointer; font-family: inherit; transition: all 0.12s; white-space: nowrap; }
   .filter-btn:hover { border-color: #7c3aed; color: #7c3aed; }
   .filter-btn.active { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+  .planned-btn { border-style: dashed; border-color: #f59e0b; color: #b45309; }
+  .planned-btn:hover { border-color: #f59e0b; color: #b45309; background: #fffbeb; }
+  .planned-btn.active { background: #f59e0b; color: #fff; border-color: #f59e0b; border-style: solid; }
   .legend-group label { font-size: 11px; color: #888; font-weight: 500; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.04em; }
   .legend { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
   .legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #444; }
@@ -34,7 +37,7 @@
 
 <header>
   <h1>CaratLane — East Region Store Performance</h1>
-  <p class="sub">67 stores across 5 regions &nbsp;·&nbsp; Revenue in Crores &nbsp;·&nbsp; Click any dot for details</p>
+  <p class="sub">67 stores across 5 regions &nbsp;·&nbsp; 10 planned for FY27 &nbsp;·&nbsp; Revenue in Crores &nbsp;·&nbsp; Click any dot for details</p>
 </header>
 
 <div class="controls">
@@ -47,6 +50,7 @@
       <button class="filter-btn"        id="btn-Jharkhand" onclick="setRegion('Jharkhand')">Jharkhand</button>
       <button class="filter-btn"        id="btn-ENE"       onclick="setRegion('ENE')">ENE — Northeast</button>
       <button class="filter-btn"        id="btn-EOC"       onclick="setRegion('EOC')">EOC — Odisha / CG</button>
+      <button class="filter-btn planned-btn" id="btn-FY27" onclick="setRegion('Planned FY27')">&#9670; Planned for FY 27</button>
     </div>
   </div>
   <div class="legend-group">
@@ -59,6 +63,8 @@
       <span class="legend-item"><span class="dot" style="background:#2563eb"></span>20 – 25 Cr</span>
       <span class="legend-item"><span class="dot" style="background:#7c3aed"></span>25 – 30 Cr</span>
       <span class="legend-item"><span class="dot" style="background:#111827"></span>30 Cr & above</span>
+      <span style="width:1px;background:#e5e3de;height:16px;display:inline-block;margin:0 4px;"></span>
+      <span class="legend-item"><span class="dot" style="background:#fff;border:2px dashed #f59e0b;"></span>Planned FY27</span>
     </div>
   </div>
 </div>
@@ -143,16 +149,27 @@ const STORES = [
   {r:'EOC', n:'Cuttack — CDA Sector VI',          c:'Cuttack',       v:6.90,  lat:20.513, lng:85.899},
   {r:'EOC', n:'Cuttack — Cantonment Road',        c:'Cuttack',       v:10.93, lat:20.463, lng:85.880},
   {r:'EOC', n:'Ambikapur — Banaras Chowk',        c:'Ambikapur',     v:7.13,  lat:23.119, lng:83.194},
-  {r:'EOC', n:'Rourkela — Birsa Road',            c:'Rourkela',      v:8.05,  lat:22.260, lng:84.853}
+  {r:'EOC', n:'Rourkela — Birsa Road',            c:'Rourkela',      v:8.05,  lat:22.260, lng:84.853},
+  {r:'Planned FY27', n:'Dobson Road',             c:'Kolkata',       v:7.2,   lat:22.582, lng:88.308, planned:true},
+  {r:'Planned FY27', n:'Hatibagan',               c:'Kolkata',       v:14.0,  lat:22.591, lng:88.363, planned:true},
+  {r:'Planned FY27', n:'Aizawl (New)',            c:'Aizawl',        v:7.2,   lat:23.740, lng:92.730, planned:true},
+  {r:'Planned FY27', n:'Jessore Road (New)',       c:'Kolkata',       v:7.2,   lat:22.638, lng:88.408, planned:true},
+  {r:'Planned FY27', n:'Jorhat',                  c:'Jorhat',        v:6.0,   lat:26.757, lng:94.203, planned:true},
+  {r:'Planned FY27', n:'Malda',                   c:'Malda',         v:6.0,   lat:25.002, lng:88.143, planned:true},
+  {r:'Planned FY27', n:'Girish Park',             c:'Kolkata',       v:8.4,   lat:22.589, lng:88.356, planned:true},
+  {r:'Planned FY27', n:'Hazaribagh',              c:'Hazaribagh',    v:6.0,   lat:23.996, lng:85.364, planned:true},
+  {r:'Planned FY27', n:'Ambikapur (New)',          c:'Ambikapur',     v:6.0,   lat:23.128, lng:83.204, planned:true},
+  {r:'Planned FY27', n:'Jajpur',                  c:'Jajpur',        v:6.0,   lat:20.849, lng:86.335, planned:true}
 ];
 
 const REGION_VIEW = {
-  'All':       { center: [22.5, 87.5], zoom: 5 },
-  'EWB 1':     { center: [22.8, 88.2], zoom: 9 },
-  'EWB 2':     { center: [22.7, 88.3], zoom: 9 },
-  'Jharkhand': { center: [23.2, 85.8], zoom: 8 },
-  'ENE':       { center: [26.0, 91.5], zoom: 6 },
-  'EOC':       { center: [20.8, 83.5], zoom: 7 }
+  'All':          { center: [22.5, 87.5], zoom: 5 },
+  'EWB 1':        { center: [22.8, 88.2], zoom: 9 },
+  'EWB 2':        { center: [22.7, 88.3], zoom: 9 },
+  'Jharkhand':    { center: [23.2, 85.8], zoom: 8 },
+  'ENE':          { center: [26.0, 91.5], zoom: 6 },
+  'EOC':          { center: [20.8, 83.5], zoom: 7 },
+  'Planned FY27': { center: [23.5, 88.5], zoom: 5 }
 };
 
 function bucketColor(v) {
@@ -175,10 +192,13 @@ function bucketLabel(v) {
   return '30+ Cr';
 }
 
-function makeIcon(color, size) {
+function makeIcon(color, size, planned) {
   const s = size || 14;
+  const inner = planned
+    ? `<div style="width:${s}px;height:${s}px;border-radius:50%;background:#fff;border:2.5px dashed #f59e0b;box-shadow:0 1px 4px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;"><div style="width:${s*0.45}px;height:${s*0.45}px;border-radius:50%;background:#f59e0b;"></div></div>`
+    : `<div style="width:${s}px;height:${s}px;border-radius:50%;background:${color};border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.35);"></div>`;
   return L.divIcon({
-    html: `<div style="width:${s}px;height:${s}px;border-radius:50%;background:${color};border:2.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.35);"></div>`,
+    html: inner,
     className: '',
     iconSize: [s, s],
     iconAnchor: [s/2, s/2],
@@ -202,13 +222,15 @@ function renderMarkers(region) {
   const visible = region === 'All' ? STORES : STORES.filter(s => s.r === region);
   visible.forEach(s => {
     const color = bucketColor(s.v);
-    const m = L.marker([s.lat, s.lng], { icon: makeIcon(color, 16) }).addTo(map);
+    const m = L.marker([s.lat, s.lng], { icon: makeIcon(color, 16, s.planned) }).addTo(map);
+    const plannedBadge = s.planned ? `<div style="margin-bottom:6px;"><span style="background:#f59e0b;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">&#9670; Planned FY27</span></div>` : '';
     m.bindPopup(`
       <div style="min-width:170px;">
+        ${plannedBadge}
         <div style="font-weight:700;font-size:14px;margin-bottom:2px;">${s.c}</div>
         <div style="color:#555;font-size:12px;margin-bottom:8px;">${s.n}</div>
-        <div style="font-size:18px;font-weight:700;color:${color};">${s.v.toFixed(2)} Cr</div>
-        <div style="font-size:11px;margin-top:3px;"><span style="background:${color};color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">${bucketLabel(s.v)}</span> &nbsp; ${s.r}</div>
+        <div style="font-size:18px;font-weight:700;color:${s.planned ? '#f59e0b' : color};">${s.v.toFixed(2)} Cr</div>
+        <div style="font-size:11px;margin-top:3px;">${s.planned ? '<span style="color:#888">Annualised revenue estimate</span>' : `<span style="background:${color};color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;">${bucketLabel(s.v)}</span> &nbsp; ${s.r}`}</div>
       </div>
     `, { maxWidth: 220 });
     markers.push(m);
@@ -235,7 +257,8 @@ function setRegion(region) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   const idMap = {
     'All':'btn-All', 'EWB 1':'btn-EWB1', 'EWB 2':'btn-EWB2',
-    'Jharkhand':'btn-Jharkhand', 'ENE':'btn-ENE', 'EOC':'btn-EOC'
+    'Jharkhand':'btn-Jharkhand', 'ENE':'btn-ENE', 'EOC':'btn-EOC',
+    'Planned FY27':'btn-FY27'
   };
   const el = document.getElementById(idMap[region]);
   if (el) el.classList.add('active');
