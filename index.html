@@ -57,7 +57,7 @@
     <label>Revenue bucket</label>
     <div class="legend">
       <span class="legend-item"><span class="dot" style="background:#dc2626"></span>Less than 6 Cr</span>
-      <span class="legend-item"><span class="dot" style="background:#ea580c"></span>6 – 10 Cr</span>
+      <span class="legend-item"><span class="dot" style="background:#0891b2"></span>6 – 10 Cr</span>
       <span class="legend-item"><span class="dot" style="background:#d97706"></span>10 – 15 Cr</span>
       <span class="legend-item"><span class="dot" style="background:#16a34a"></span>15 – 20 Cr</span>
       <span class="legend-item"><span class="dot" style="background:#2563eb"></span>20 – 25 Cr</span>
@@ -173,13 +173,13 @@ const REGION_VIEW = {
 };
 
 function bucketColor(v) {
-  if (v < 6)  return '#dc2626';
-  if (v < 10) return '#ea580c';
-  if (v < 15) return '#d97706';
-  if (v < 20) return '#16a34a';
-  if (v < 25) return '#2563eb';
-  if (v < 30) return '#7c3aed';
-  return '#111827';
+  if (v < 6)  return '#dc2626';   // red
+  if (v < 10) return '#0891b2';   // cyan
+  if (v < 15) return '#d97706';   // amber
+  if (v < 20) return '#16a34a';   // green
+  if (v < 25) return '#2563eb';   // blue
+  if (v < 30) return '#7c3aed';   // purple
+  return '#111827';                // near-black
 }
 
 function bucketLabel(v) {
